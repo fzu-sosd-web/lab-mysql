@@ -2,7 +2,7 @@ package cn.edu.fzu.sosd.web.lab.mysql.sanity;
 
 import cn.edu.fzu.sosd.web.lab.mysql.dto.UserDto;
 import cn.edu.fzu.sosd.web.lab.mysql.service.UserService;
-import cn.edu.fzu.sosd.web.lab.mysql.service.impl.NoopUserService;
+import cn.edu.fzu.sosd.web.lab.mysql.service.impl.UserServiceImpl;
 import cn.edu.fzu.sosd.web.lab.mysql.test.Harness;
 
 import java.text.ParseException;
@@ -23,7 +23,7 @@ public class Test extends Harness {
     }
 
     public static void main(String[] args) throws ParseException {
-        new Test(new NoopUserService()).process();
+        new Test(new UserServiceImpl()).process();
     }
 
 }

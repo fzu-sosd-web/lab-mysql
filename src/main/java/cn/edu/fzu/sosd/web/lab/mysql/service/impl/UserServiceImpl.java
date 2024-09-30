@@ -6,7 +6,7 @@ import cn.edu.fzu.sosd.web.lab.mysql.service.UserService;
 import java.util.Date;
 import java.util.List;
 
-public class NoopUserService implements UserService {
+public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto save(UserDto userDto) {
