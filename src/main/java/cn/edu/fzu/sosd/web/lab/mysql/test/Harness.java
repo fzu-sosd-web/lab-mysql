@@ -5,6 +5,7 @@ import cn.edu.fzu.sosd.web.lab.mysql.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.slf4j.Logger;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -13,22 +14,24 @@ import java.util.concurrent.*;
 public abstract class Harness {
 
     private final ExecutorService executor;
+    private final Logger log;
 
-    public Harness() {
+    public Harness(Logger log) {
+        this.log = log;
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    public Object runTask(Callable<Object> task, int timeout, String testName) throws InterruptedException {
-        System.out.println("任务[" + testName + "]开始执行，限时:" + timeout + "ms");
+    public Object runTask(Callable<Object> task, int timeout, String taskName) throws InterruptedException {
+        log.info("run task {} with timeout {}", taskName, timeout);
         Future<Object> future = executor.submit(task);
         try {
             // 获取结果，如果在指定时间内未完成会抛出 TimeoutException
             return future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            System.out.println("任务[" + testName + "]超时！");
+            log.error("run task {} timeout", taskName, e);
             return null;
         } catch (ExecutionException e) {
-            System.out.println("任务[" + testName + "]执行时发生错误：" + e.getMessage());
+            log.error("run task {} error", taskName, e);
             return null;
         } finally {
             future.cancel(true); // 取消任务
