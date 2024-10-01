@@ -12,7 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDto {
-    private Long id;
+    // id should be auto-increment
+    private long id;
     private String username;
     private String password;
     private String avatar;

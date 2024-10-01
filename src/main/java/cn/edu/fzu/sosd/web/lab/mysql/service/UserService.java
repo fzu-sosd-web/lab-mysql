@@ -13,7 +13,14 @@ public interface UserService {
 
     UserDto getUserById(long id);
 
-    List<UserDto> getAllUser();
+    /**
+     * 分页返回所有User数据
+     * 需要根据updateTime降序返回（新更新的数据排在前面）。
+     * @param page 第几页，从0开始计数
+     * @param size 每页有多少条数据
+     * @return 该页的UserDto列表
+     */
+    List<UserDto> getAllUserByPage(int page, int size);
 
     List<UserDto> searchUserByPrefix(String prefix);
 

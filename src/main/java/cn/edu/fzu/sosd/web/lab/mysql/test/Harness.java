@@ -53,8 +53,8 @@ public abstract class Harness {
     @SneakyThrows
     public UserDto mockInput() {
         UserDto userDto = new UserDto();
-        userDto.setUsername(RandomStringUtils.randomAlphanumeric(8));
-        userDto.setPassword(RandomStringUtils.randomAlphanumeric(8));
+        userDto.setUsername(RandomStringUtils.randomNumeric(8));
+        userDto.setPassword(RandomStringUtils.randomNumeric(8));
         userDto.setAvatar(RandomStringUtils.randomAlphanumeric(128));
         Date randDate = DateUtils.addDays(TimeUtil.parseDate("2003-01-25"), RandomUtils.nextInt(0, 1000) - 500);
         userDto.setBirthday(randDate);

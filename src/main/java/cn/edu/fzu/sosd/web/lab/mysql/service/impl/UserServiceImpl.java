@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUser() {
+    public List<UserDto> getAllUserByPage(int page, int size) {
         return List.of();
     }
 

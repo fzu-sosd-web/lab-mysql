@@ -4,10 +4,12 @@ import cn.edu.fzu.sosd.web.lab.mysql.dto.UserDto;
 import cn.edu.fzu.sosd.web.lab.mysql.service.UserService;
 import cn.edu.fzu.sosd.web.lab.mysql.service.impl.UserServiceImpl;
 import cn.edu.fzu.sosd.web.lab.mysql.test.Harness;
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +18,6 @@ public class SanityTest extends Harness {
 
     private final Logger log;
     private final UserService userService;
-
-    private List<UserDto> users;
-    private Map<String, List<UserDto>> roleUserMap;
 
     public SanityTest(Logger log, UserService userService) {
         super(log);
@@ -30,22 +29,14 @@ public class SanityTest extends Harness {
         log.info(">>> Sanity test start >>>");
         userService.removeAll();
 
-        // Step 1:
+        // Step 1
         verifySave();
 
-        // Step 3: Search user by prefix
-        log.info("Searching users by prefix: {}", "test");
-        List<UserDto> usersByPrefix = userService.searchUserByPrefix("test");
-        assert usersByPrefix != null : "Users by prefix should not be null";
-        assert usersByPrefix.size() > 0 : "Users found with prefix 'test' should be greater than 0";
-        log.info("Users found with prefix 'test': {}", usersByPrefix);
+        // Step 2
+        verifyPrefixSearch();
 
-        // Step 4: Get all users
-        log.info("Getting all users");
-        List<UserDto> allUsers = userService.getAllUser();
-        assert allUsers != null : "All users should not be null";
-        assert allUsers.size() > 0 : "All users should be greater than 0";
-        log.info("All users: {}", allUsers);
+        // Step 3
+        verifyPageAndOrder();
 
         // Step 5: Get users by role
         log.info("Getting users by role: {}", "admin");
@@ -68,29 +59,24 @@ public class SanityTest extends Harness {
         }
 
         // Step 8: Ban the created user by ID
-        log.info("Banning user by ID: {}", userId);
-        UserDto bannedUser = userService.banById(userId);
-        assert bannedUser != null : "Banned user should not be null";
-        assert bannedUser.isBanned() : "Banned user should be marked as banned";
-        log.info("Banned user: {}", bannedUser);
 
-        log.info("Sanity test end");
+        log.info(">>> Pass all sanity tests, Congrats! >>>");
     }
 
     void verifySave() {
         clear();
-
         log.info("Test: verify save to db and generate unique key.");
         UserDto input = mockInput();
         UserDto saved = userService.save(input);
+        UserDto shadow = userService.save(input);
         boolean match = infoMatch(saved, input);
         if (false == match) {
             log.error("FAIL: save failed, input: {}, saved: {}", input, saved);
             System.exit(-1);
         }
-        long key = input.getId();
-        if (key == 0L) {
-            log.error("FAIL: primary generate failed");
+        long key = saved.getId();
+        if (key == 0L || shadow.getId() != key + 1) {
+            log.error("FAIL: auto-increment primary key generate failed");
             System.exit(-1);
         }
         UserDto got = userService.getUserById(key);
@@ -99,13 +85,13 @@ public class SanityTest extends Harness {
             log.error("FAIL: failed to locate user by key:{}", key);
             System.exit(-1);
         }
-        String updateName = "ywj";
+        final String updateName = "ywj";
         saved.setUsername(updateName);
         userService.save(saved);
         got = userService.getUserById(key);
         match = infoMatch(got, saved);
         if (false == match) {
-            log.error("FAIL: failed to update user info, should be:{}, but:{}", saved.getUsername(), got.getUsername());
+            log.error("FAIL: failed to update user info, should be:{}, but:{}", updateName, got.getUsername());
             System.exit(-1);
         }
 
@@ -113,8 +99,61 @@ public class SanityTest extends Harness {
     }
 
     void verifyPrefixSearch() {
+        clear();
         log.info("Test: verify prefix search.");
+        List<UserDto> users = new ArrayList<>();
+        final String prefix = "sosd";
+        final int size = 20;
+        int prefixUserCount = 0;
+        List<UserDto> inputList = mockInputList(size);
+        for (UserDto input : inputList) {
+            if (input.getUsername().hashCode() % 2 == 0) {
+                input.setUsername(prefix + input.getUsername());
+                prefixUserCount++;
+            }
+            UserDto saved = userService.save(input);
+            users.add(saved);
+        }
 
+        List<UserDto> searched = userService.searchUserByPrefix(prefix);
+        if (searched.size() != prefixUserCount) {
+            log.error("FAIL: searched user count {} does not match size {}", searched.size(), size);
+            System.exit(-1);
+        }
+
+        log.info("PASS");
+    }
+
+    void verifyPageAndOrder() {
+        clear();
+        log.info("Test: verify page and order.");
+        final int num = 100;
+        final int pageSize = 10;
+        List<UserDto> users = new ArrayList<>();
+        List<UserDto> inputList = mockInputList(num);
+        for (UserDto input : inputList) {
+            UserDto saved = userService.save(input);
+            users.add(saved);
+        }
+
+        List<UserDto> page0 = userService.getAllUserByPage(0, 10);
+
+        if (page0.size() != pageSize) {
+            log.error("FAIL: page failed");
+            System.exit(-1);
+        }
+
+        UserDto chosen = users.get(RandomUtils.nextInt(0, num));
+        chosen.setPassword("123456");
+        userService.save(chosen);
+
+        List<UserDto> page1 = userService.getAllUserByPage(0, 10);
+        if (infoMatch(page1.get(0), chosen) == false) {
+            log.error("FAIL: order failed");
+            System.exit(-1);
+        }
+
+        log.info("PASS");
     }
 
     void clear() {
@@ -122,10 +161,10 @@ public class SanityTest extends Harness {
         userService.removeAll();
         int userCount = userService.userCount();
         if (userCount != 0) {
-            log.error("FAIL: user count: {}, clear unsuccessful", userCount);
+            log.error("FATAL: user count: {}, clear unsuccessful", userCount);
             System.exit(-1);
         }
-        log.info("Done.");
+        log.info("Done");
     }
 
 
