@@ -19,8 +19,6 @@ public interface UserService {
 
     List<UserDto> getUserByRole(String role);
 
-    List<UserDto> searchUserByPermission(String permission);
-
     List<UserDto> listUserByBirthdayInterval(Date start, Date end);
 
     void removeAll();

@@ -39,11 +39,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> searchUserByPermission(String permission) {
-        return List.of();
-    }
-
-    @Override
     public List<UserDto> listUserByBirthdayInterval(Date start, Date end) {
         return List.of();
     }

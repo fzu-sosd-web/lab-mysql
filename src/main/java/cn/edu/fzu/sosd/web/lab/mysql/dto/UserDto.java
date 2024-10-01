@@ -20,22 +20,12 @@ public class UserDto {
     private Date birthday;
     private Date updateTime;
     private List<String> roles;
-    private List<String> permissions;
 
     public String roles() {
         StringBuilder sb = new StringBuilder();
         Collections.sort(roles);
         for (String role : roles) {
             sb.append(role).append(",");
-        }
-        return sb.toString();
-    }
-
-    public String permissions() {
-        StringBuilder sb = new StringBuilder();
-        Collections.sort(permissions);
-        for (String permission : permissions) {
-            sb.append(permission).append(",");
         }
         return sb.toString();
     }

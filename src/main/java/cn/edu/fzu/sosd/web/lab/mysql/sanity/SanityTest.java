@@ -10,12 +10,15 @@ import org.slf4j.LoggerFactory;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class SanityTest extends Harness {
 
     private final Logger log;
-
     private final UserService userService;
+
+    private List<UserDto> users;
+    private Map<String, List<UserDto>> roleUserMap;
 
     public SanityTest(Logger log, UserService userService) {
         super(log);
@@ -53,12 +56,6 @@ public class SanityTest extends Harness {
         assert usersByRole != null : "Users by role should not be null";
         log.info("Users with role 'admin': {}", usersByRole);
 
-        // Step 6: Search users by permission
-        log.info("Searching users by permission: {}", "READ");
-        List<UserDto> usersByPermission = userService.searchUserByPermission("READ");
-        assert usersByPermission != null : "Users by permission should not be null";
-        log.info("Users with permission 'READ': {}", usersByPermission);
-
         // Step 7: Get users by birthday interval
         Date startDate = new Date(0); // Unix epoch time
         Date endDate = new Date(); // Current date
@@ -83,7 +80,7 @@ public class SanityTest extends Harness {
         log.info("Sanity test end");
     }
 
-    public boolean verifySave() {
+    boolean verifySave() {
         log.info("Test: verify save to db and generate unique key.");
         UserDto input = mockInput();
         UserDto saved = userService.save(input);
@@ -105,6 +102,11 @@ public class SanityTest extends Harness {
         }
         log.info("PASS");
         return true;
+    }
+
+    boolean verifyPrefixSearch() {
+        log.info("Test: verify prefix search.");
+
     }
 
 
