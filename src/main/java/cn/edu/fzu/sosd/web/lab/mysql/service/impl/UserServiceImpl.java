@@ -47,4 +47,9 @@ public class UserServiceImpl implements UserService {
     public void removeAll() {
 
     }
+
+    @Override
+    public int userCount() {
+        return 0;
+    }
 }

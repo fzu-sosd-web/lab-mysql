@@ -22,4 +22,6 @@ public interface UserService {
     List<UserDto> listUserByBirthdayInterval(Date start, Date end);
 
     void removeAll();
+
+    int userCount();
 }

@@ -31,10 +31,7 @@ public class SanityTest extends Harness {
         userService.removeAll();
 
         // Step 1:
-        if (verifySave() == false) {
-            log.info(">>> Sanity test end >>>");
-            return;
-        }
+        verifySave();
 
         // Step 3: Search user by prefix
         log.info("Searching users by prefix: {}", "test");
@@ -80,33 +77,55 @@ public class SanityTest extends Harness {
         log.info("Sanity test end");
     }
 
-    boolean verifySave() {
+    void verifySave() {
+        clear();
+
         log.info("Test: verify save to db and generate unique key.");
         UserDto input = mockInput();
         UserDto saved = userService.save(input);
         boolean match = infoMatch(saved, input);
         if (false == match) {
             log.error("FAIL: save failed, input: {}, saved: {}", input, saved);
-            return false;
+            System.exit(-1);
         }
         long key = input.getId();
         if (key == 0L) {
             log.error("FAIL: primary generate failed");
-            return false;
+            System.exit(-1);
         }
-        UserDto userById = userService.getUserById(key);
-        match = infoMatch(userById, saved);
+        UserDto got = userService.getUserById(key);
+        match = infoMatch(got, saved);
         if (false == match) {
             log.error("FAIL: failed to locate user by key:{}", key);
-            return false;
+            System.exit(-1);
         }
+        String updateName = "ywj";
+        saved.setUsername(updateName);
+        userService.save(saved);
+        got = userService.getUserById(key);
+        match = infoMatch(got, saved);
+        if (false == match) {
+            log.error("FAIL: failed to update user info, should be:{}, but:{}", saved.getUsername(), got.getUsername());
+            System.exit(-1);
+        }
+
         log.info("PASS");
-        return true;
     }
 
-    boolean verifyPrefixSearch() {
+    void verifyPrefixSearch() {
         log.info("Test: verify prefix search.");
 
+    }
+
+    void clear() {
+        log.info("Must Done: clear all user.");
+        userService.removeAll();
+        int userCount = userService.userCount();
+        if (userCount != 0) {
+            log.error("FAIL: user count: {}, clear unsuccessful", userCount);
+            System.exit(-1);
+        }
+        log.info("Done.");
     }
 
 

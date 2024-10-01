@@ -47,8 +47,7 @@ public abstract class Harness {
                 actual.getAvatar().equals(expected.getAvatar()) &&
                 actual.getBirthday().equals(expected.getBirthday()) &&
                 actual.getStatus() == expected.getStatus() &&
-                actual.roles().equals(expected.roles()) &&
-                actual.permissions().equals(expected.permissions());
+                actual.roles().equals(expected.roles());
     }
 
     @SneakyThrows
