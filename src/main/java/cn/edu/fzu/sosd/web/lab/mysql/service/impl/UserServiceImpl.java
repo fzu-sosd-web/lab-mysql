@@ -47,4 +47,9 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> listUserByBirthdayInterval(Date start, Date end) {
         return List.of();
     }
+
+    @Override
+    public void removeAll() {
+
+    }
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -21,5 +22,26 @@ public class UserDto {
     private List<String> roles;
     private List<String> permissions;
 
+    public String roles() {
+        StringBuilder sb = new StringBuilder();
+        Collections.sort(roles);
+        for (String role : roles) {
+            sb.append(role).append(",");
+        }
+        return sb.toString();
+    }
+
+    public String permissions() {
+        StringBuilder sb = new StringBuilder();
+        Collections.sort(permissions);
+        for (String permission : permissions) {
+            sb.append(permission).append(",");
+        }
+        return sb.toString();
+    }
+
+    public boolean isBanned() {
+        return status == -1;
+    }
 
 }
