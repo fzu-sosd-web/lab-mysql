@@ -20,12 +20,19 @@ public interface UserService {
      * @param size 每页有多少条数据
      * @return 该页的UserDto列表
      */
-    List<UserDto> getAllUserByPage(int page, int size);
+    List<UserDto> getAllUserByPageOrderByUpdateTime(int page, int size);
 
     List<UserDto> searchUserByPrefix(String prefix);
 
+    UserDto appendRole(long id, String role);
+
+    UserDto removeRole(long id, String role);
+
     List<UserDto> getUserByRole(String role);
 
+    /**
+     * 是开区间 () 不包含端点
+     */
     List<UserDto> listUserByBirthdayInterval(Date start, Date end);
 
     void removeAll();

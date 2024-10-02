@@ -4,15 +4,14 @@ import cn.edu.fzu.sosd.web.lab.mysql.dto.UserDto;
 import cn.edu.fzu.sosd.web.lab.mysql.service.UserService;
 import cn.edu.fzu.sosd.web.lab.mysql.service.impl.UserServiceImpl;
 import cn.edu.fzu.sosd.web.lab.mysql.test.Harness;
+import cn.edu.fzu.sosd.web.lab.mysql.util.TimeUtil;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SanityTest extends Harness {
 
@@ -27,7 +26,6 @@ public class SanityTest extends Harness {
 
     public void process() throws ParseException {
         log.info(">>> Sanity test start >>>");
-        userService.removeAll();
 
         // Step 1
         verifySave();
@@ -38,27 +36,11 @@ public class SanityTest extends Harness {
         // Step 3
         verifyPageAndOrder();
 
-        // Step 5: Get users by role
-        log.info("Getting users by role: {}", "admin");
-        List<UserDto> usersByRole = userService.getUserByRole("admin");
-        assert usersByRole != null : "Users by role should not be null";
-        log.info("Users with role 'admin': {}", usersByRole);
+        // Step 4
+        verifyRole();
 
-        // Step 7: Get users by birthday interval
-        Date startDate = new Date(0); // Unix epoch time
-        Date endDate = new Date(); // Current date
-        log.info("Getting users with birthdays between {} and {}", startDate, endDate);
-        List<UserDto> usersByBirthdayInterval = userService.listUserByBirthdayInterval(startDate, endDate);
-        assert usersByBirthdayInterval != null : "Users by birthday interval should not be null";
-        log.info("Users with birthdays in interval: {}", usersByBirthdayInterval);
-
-        // Validate birthday interval
-        for (UserDto user : usersByBirthdayInterval) {
-            assert user.getBirthday().after(startDate) && user.getBirthday().before(endDate) :
-                    "User birthday " + user.getBirthday() + " is not in the interval";
-        }
-
-        // Step 8: Ban the created user by ID
+        // Step 5
+        verifyInterval();
 
         log.info(">>> Pass all sanity tests, Congrats! >>>");
     }
@@ -127,7 +109,7 @@ public class SanityTest extends Harness {
     void verifyPageAndOrder() {
         clear();
         log.info("Test: verify page and order.");
-        final int num = 100;
+        final int num = 1000;
         final int pageSize = 10;
         List<UserDto> users = new ArrayList<>();
         List<UserDto> inputList = mockInputList(num);
@@ -136,7 +118,7 @@ public class SanityTest extends Harness {
             users.add(saved);
         }
 
-        List<UserDto> page0 = userService.getAllUserByPage(0, 10);
+        List<UserDto> page0 = userService.getAllUserByPageOrderByUpdateTime(0, 10);
 
         if (page0.size() != pageSize) {
             log.error("FAIL: page failed");
@@ -147,10 +129,98 @@ public class SanityTest extends Harness {
         chosen.setPassword("123456");
         userService.save(chosen);
 
-        List<UserDto> page1 = userService.getAllUserByPage(0, 10);
+        List<UserDto> page1 = userService.getAllUserByPageOrderByUpdateTime(0, 10);
         if (infoMatch(page1.get(0), chosen) == false) {
             log.error("FAIL: order failed");
             System.exit(-1);
+        }
+
+        log.info("PASS");
+    }
+
+    void verifyRole() {
+        clear();
+        log.info("Test: verify role.");
+        List<UserDto> users = new ArrayList<>();
+        Map<String, List<UserDto>> roleUserMapper = new HashMap<>();
+        List<String> allRoles = List.of("member", "admin", "teacher", "eval-member");
+        allRoles.forEach(role -> {
+            roleUserMapper.put(role, new ArrayList<>());
+        });
+        final int num = 100;
+        List<UserDto> inputList = mockInputList(num);
+        for (UserDto input : inputList) {
+            List<String> roles = new ArrayList<>();
+            if (RandomUtils.secure().randomBoolean()) {
+                roles.add("eval-member");  // 50% chance of being "eval-member"
+            } else {
+                roles.add("member");
+                roles.add(RandomUtils.secure().randomBoolean() ? "admin" : "teacher");
+            }
+
+            UserDto saved = userService.save(input);
+            users.add(saved);
+            for (String role : roles) {
+                roleUserMapper.get(role).add(saved);
+            }
+        }
+
+        roleUserMapper.forEach((k, v) -> {
+            List<UserDto> byRole = userService.getUserByRole(k);
+            if (false == infoMatch(byRole, roleUserMapper.get(k))) {
+                log.error("FAIL: wrong answer of finding role by key:{}", k);
+                System.exit(-1);
+            }
+        });
+
+        // 1. choose a random eval-member user
+        UserDto chosen = roleUserMapper.get("eval-member").get(0);
+        // 2. adjust user role to member, delete eval-member
+        chosen = userService.removeRole(chosen.getId(), "eval-member");
+        chosen = userService.appendRole(chosen.getId(), "member");
+
+        if (chosen.getRoles().contains("eval-member") || chosen.getRoles().contains("member") == false) {
+            log.error("FAIL: update roles failed:{}", chosen.getId());
+            System.exit(-1);
+        }
+        // 3. update in-memory user list
+        long influenceId = chosen.getId();
+        roleUserMapper.get("eval-member").removeIf(user -> user.getId() == influenceId);
+        roleUserMapper.get("member").add(chosen);
+
+        roleUserMapper.forEach((k, v) -> {
+            List<UserDto> byRole = userService.getUserByRole(k);
+            if (false == infoMatch(byRole, roleUserMapper.get(k))) {
+                log.error("FAIL: wrong answer of finding role by key:{} (after update role)", k);
+                System.exit(-1);
+            }
+        });
+
+        log.info("PASS");
+    }
+
+    void verifyInterval() {
+        clear();
+        log.info("Test: test interval select.");
+        final int num = 1000;
+        final Date mid = TimeUtil.parseDate("2003-01-25");
+        final int delta = RandomUtils.secure().randomInt(0, 500);
+        final Date start = DateUtils.addDays(mid, -delta);
+        final Date end = DateUtils.addDays(mid, delta);
+        List<UserDto> users = new ArrayList<>();
+        List<UserDto> inputList = mockInputList(num);
+        List<UserDto> inInterval = new ArrayList<>();
+        for (UserDto input : inputList) {
+            UserDto saved = userService.save(input);
+            users.add(saved);
+            if (saved.getBirthday().after(start) && saved.getBirthday().before(end)) {
+                inInterval.add(saved);
+            }
+        }
+
+        List<UserDto> byBirthdayInterval = userService.listUserByBirthdayInterval(start, end);
+        if (false == infoMatch(byBirthdayInterval, inInterval)) {
+            log.error("FAIL: wrong answer of finding interval");
         }
 
         log.info("PASS");

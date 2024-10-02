@@ -24,13 +24,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUserByPage(int page, int size) {
+    public List<UserDto> getAllUserByPageOrderByUpdateTime(int page, int size) {
         return List.of();
     }
 
     @Override
     public List<UserDto> searchUserByPrefix(String prefix) {
         return List.of();
+    }
+
+    @Override
+    public UserDto appendRole(long id, String role) {
+        return null;
+    }
+
+    @Override
+    public UserDto removeRole(long id, String role) {
+        return null;
     }
 
     @Override

@@ -9,9 +9,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 public abstract class Harness {
@@ -42,6 +40,13 @@ public abstract class Harness {
     }
 
     public boolean infoMatch(UserDto actual, UserDto expected) {
+        if (actual == null) {
+            log.warn("actual is null");
+            return false;
+        }
+        if (expected == null) {
+            log.warn("expected is null");
+        }
         return actual.getUsername().equals(expected.getUsername()) &&
                 actual.getPassword().equals(expected.getPassword()) &&
                 actual.getAvatar().equals(expected.getAvatar()) &&
@@ -50,7 +55,28 @@ public abstract class Harness {
                 actual.roles().equals(expected.roles());
     }
 
-    @SneakyThrows
+    public boolean infoMatch(List<UserDto> actual, List<UserDto> expected) {
+        if (actual.size() != expected.size()) {
+            return false;
+        }
+        Comparator<UserDto> comp = new Comparator<UserDto>() {
+            @Override
+            public int compare(UserDto o1, UserDto o2) {
+                return (int) (o1.getId() - o2.getId());
+            }
+        };
+        Collections.sort(actual, comp);
+        Collections.sort(expected, comp);
+        for (int i = 0; i < actual.size(); i++) {
+            UserDto actualDto = actual.get(i);
+            UserDto expectedDto = expected.get(i);
+            if (false == infoMatch(actualDto, expectedDto)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public UserDto mockInput() {
         UserDto userDto = new UserDto();
         userDto.setUsername(RandomStringUtils.randomNumeric(8));
