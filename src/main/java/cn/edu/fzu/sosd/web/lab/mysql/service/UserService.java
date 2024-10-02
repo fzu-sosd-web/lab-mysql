@@ -9,8 +9,6 @@ public interface UserService {
 
     UserDto save(UserDto userDto);
 
-    UserDto banById(long id);
-
     UserDto getUserById(long id);
 
     /**

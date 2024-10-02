@@ -14,11 +14,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto banById(long id) {
-        return null;
-    }
-
-    @Override
     public UserDto getUserById(long id) {
         return null;
     }
