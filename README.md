@@ -13,7 +13,7 @@ Lec3会有两个lab以供练习：
 ## Lab A: Sanity Test
 
 你需要拥有的**前置知识**：
-- maven的基本使用
+- maven的基本使用（让项目跑起来）
 - MySQL（或其他dbms）环境搭建
 - 数据库表设计能力
 - Java编程能力

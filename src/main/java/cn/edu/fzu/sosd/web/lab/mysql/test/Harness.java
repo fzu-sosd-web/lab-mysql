@@ -85,6 +85,7 @@ public abstract class Harness {
         Date randDate = DateUtils.addDays(TimeUtil.parseDate("2003-01-25"), RandomUtils.nextInt(0, 1000) - 500);
         userDto.setBirthday(randDate);
         userDto.setStatus(0);
+        userDto.setRoles(List.of("mock-user"));
         return userDto;
     }
 
